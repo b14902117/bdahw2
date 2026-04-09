@@ -1,7 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import requests
-import google.generativeai as genai
+from google import genai
 import os
 
 # --- 1. THE DATA FETCHING (CACHED) ---
@@ -32,32 +32,35 @@ def fetch_fresh_data():
     df['mNAV'] = (df['Close'] * 194700000) / (252220 * btc_price)
     return df, btc_price
 
-# Initial load
-df, btc_price = fetch_fresh_data()
+if st.button("Generate 1 month report"):
+    # Initial load
+    df, btc_price = fetch_fresh_data()
 
-# --- 2. MAIN UI ---
-st.title("MSTR Dashboard")
-st.line_chart(df['mNAV'])
+    # --- 2. MAIN UI ---
+    st.title("MSTR Dashboard")
+    st.line_chart(df['mNAV'])
 
-# --- 3. THE "GENERATE REPORT" LOGIC ---
-st.divider() # Visual line
+    # --- 3. THE "GENERATE REPORT" LOGIC ---
+    st.divider() # Visual line
 
-if st.button("🔄 Generate Report & Update Data"):
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+if st.button("Generate AI Report"):
     with st.spinner("Refetching live data and consulting AI..."):
         # STEP A: Clear the cache so the next call gets fresh data
         fetch_fresh_data.clear()
         
         # STEP B: Get the new data
         new_df, new_btc = fetch_fresh_data()
-        
+
         # STEP C: Trigger the AI Report
-        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        model = genai.GenerativeModel('gemini-1.5-flash')
         
         latest_mnav = round(new_df['mNAV'].iloc[-1], 2)
-        prompt = f"The updated mNAV for MSTR is {latest_mnav} and BTC is ${new_btc}. Write a 3-sentence investment summary."
-        
-        response = model.generate_content(prompt)
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=f"The updated mNAV for MSTR is {latest_mnav} and BTC is ${new_btc}. Generate summaries or insights based on the data and provide interpretation or trend analysis"
+        )
         
         # Display the result in a nice box
         st.subheader("AI Insight Report")

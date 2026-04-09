@@ -7,14 +7,28 @@ import os
 # --- 1. THE DATA FETCHING (CACHED) ---
 @st.cache_data(ttl=3600)  # Standard cache for 1 hour
 def fetch_fresh_data():
-    # Fetch MSTR Stock
+    # 1. Fetch MSTR Stock
     mstr = yf.Ticker("MSTR")
     df = mstr.history(period="1mo")
     
-    # Fetch BTC Price
-    btc_price = requests.get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd").json()['bitcoin']['usd']
+    # 2. Fetch BTC Price with Error Handling
+    try:
+        url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+        response = requests.get(url, timeout=10)
+        data = response.json()
+        
+        # Check if 'bitcoin' is actually in the response
+        if 'bitcoin' in data:
+            btc_price = data['bitcoin']['usd']
+        else:
+            st.warning("CoinGecko rate limit reached. Using fallback price.")
+            btc_price = 70000.0  # Safe fallback for calculation
+            
+    except Exception as e:
+        st.error(f"Price fetch failed: {e}")
+        btc_price = 70000.0 # Safe fallback
     
-    # Simple mNAV calc (simplified for example)
+    # 3. Calculation
     df['mNAV'] = (df['Close'] * 194700000) / (252220 * btc_price)
     return df, btc_price
 

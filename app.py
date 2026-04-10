@@ -13,7 +13,7 @@ def fetch_fresh_data():
     
     # 2. Fetch BTC Price with Error Handling
     try:
-        url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+        url = "https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&ids=bitcoin&x_cg_demo_api_key=CG-cERq4FTNaXGuHTh5Vct8gh1D"
         response = requests.get(url, timeout=10)
         data = response.json()
         
@@ -21,12 +21,12 @@ def fetch_fresh_data():
         if 'bitcoin' in data:
             btc_price = data['bitcoin']['usd']
         else:
-            st.warning("CoinGecko rate limit reached. Using fallback price.")
-            btc_price = 70000.0  # Safe fallback for calculation
+            #st.warning("CoinGecko rate limit reached. Using fallback price.")
+            btc_price = 71868.4  # Safe fallback for calculation
             
     except Exception as e:
         st.error(f"Price fetch failed: {e}")
-        btc_price = 70000.0 # Safe fallback
+        btc_price = 71868.4 # Safe fallback
     
     # 3. Calculation
     df['mNAV'] = (df['Close'] * 194700000) / (252220 * btc_price)

@@ -42,6 +42,8 @@ if st.button("Generate one month report + Gemini review"):
     df, btc_price = fetch_fresh_data()
 
     latest_mnav = round(df['mNAV'].iloc[-1], 2)
+    
+    st.header(f"current mNAV: {latest_mnav}")
 
     if latest_mnav <= 0.80:
         st.info("Deep Discount")

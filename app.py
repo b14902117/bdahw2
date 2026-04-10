@@ -43,19 +43,24 @@ if st.button("Generate 1 month report"):
     # --- 3. THE "GENERATE REPORT" LOGIC ---
     st.divider() # Visual line
 
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-    if st.button("Generate AI Report"):
-        with st.spinner("Refetching live data and consulting AI..."):
-            
-            latest_mnav = round(df['mNAV'].iloc[-1], 2)
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=f"The updated mNAV for MSTR is {latest_mnav} and BTC is ${btc_price}. Generate summaries or insights based on the data and provide interpretation or trend analysis"
-            )
-            
-            # Display the result in a nice box
-            st.subheader("AI Insight Report")
-            st.success(response.text)
-            st.info(f"Data last updated at: {df.index[-1].strftime('%Y-%m-%d %H:%M:%S')}")
+if st.button("Generate AI Report"):
+    with st.spinner("Refetching live data and consulting AI..."):
+        
+        fetch_fresh_data.clear()
+
+        new_df, new_btc_price = fetch_fresh_data()
+
+        latest_mnav = round(new_df['mNAV'].iloc[-1], 2)
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=f"The updated mNAV for MSTR is {latest_mnav} and BTC is ${new_btc_price}. Generate summaries or insights based on the data and provide interpretation or trend analysis"
+        )
+        
+        # Display the result in a nice box
+        st.subheader("AI Insight Report")
+        st.success(response.text)
+        st.info(f"Data last updated at: {new_df.index[-1].strftime('%Y-%m-%d %H:%M:%S')}")
